@@ -1,0 +1,46 @@
+# depslib dependency file v1.0
+1742825786 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server/main.c
+	"headers.h"
+
+1742917773 /home/damian/Escritorio/telecomunicaciones/Internet/File Server/headers.h
+	<time.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	<unistd.h>
+	<arpa/inet.h>
+
+1742916605 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server/funciones.c
+	"headers.h"
+
+1743459948 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server2/funciones.c
+	"headers.h"
+
+1743459741 /home/damian/Escritorio/telecomunicaciones/Internet/File Server2/headers.h
+	<time.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	<unistd.h>
+	<arpa/inet.h>
+
+1743460108 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server2/main.c
+	"headers.h"
+
+1743542458 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server3/main.c
+	"headers.h"
+
+1743542631 /home/damian/Escritorio/telecomunicaciones/Internet/File Server3/headers.h
+	<time.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	<unistd.h>
+	<arpa/inet.h>
+
+1743542710 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server3/funciones.c
+	"headers.h"
+
