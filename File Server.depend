@@ -29,10 +29,10 @@
 1743460108 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server2/main.c
 	"headers.h"
 
-1743542458 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server3/main.c
+1744911853 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server3/main.c
 	"headers.h"
 
-1743542631 /home/damian/Escritorio/telecomunicaciones/Internet/File Server3/headers.h
+1744911244 /home/damian/Escritorio/telecomunicaciones/Internet/File Server3/headers.h
 	<time.h>
 	<stdio.h>
 	<stdlib.h>
@@ -40,7 +40,8 @@
 	<stdbool.h>
 	<unistd.h>
 	<arpa/inet.h>
+	<dirent.h>
 
-1743542710 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server3/funciones.c
+1744911931 source:/home/damian/Escritorio/telecomunicaciones/Internet/File Server3/funciones.c
 	"headers.h"
 

@@ -1,5 +1,5 @@
 #include "headers.h"
-
+#include "funciones.c"
 int main(int argc, char *argv[]) {
     Network_dir server_dir;
     Network_dir cliente_dir;
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     {
         FD_ZERO(&readfds);
         FD_SET(server_dir.fd, &readfds);
-        SETDESCRIPTORES(descriptores, n, &readfds);
+        set_fds(descriptores, n, &readfds);
         select(MAX_CLIENTS, &readfds, NULL, NULL, NULL);
 
         // Verifica si se recibio una conexion o un cliente envio datos
