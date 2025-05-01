@@ -12,9 +12,9 @@
 
 #define PORT 8080
 #define MAX_CLIENTS 4 + 4
-#define ERR_LECTURA 5
-#define MAX_SOLICITUD 50
-#define ARCHIVO_NO_ENCONTRADO "ARCHIVO_NO_ENCONTRADO"
+#define MAX_SOLICITUD 1024
+#define ARCHIVO_NO_ENCONTRADO "5|21|ARCHIVO_NO_ENCONTRADO"
+#define CARPETA_NO_ENCONTRADA "5|21|CARPETA_NO_ENCONTRADA"
 
 #define SOLICITUD '1'
 #define SUBIDA '2'
@@ -29,28 +29,23 @@ typedef struct{
 }Network_dir;
 
 typedef struct{
-    int flag;
-    int tam;
-    char* data;
-}Data;
-
-typedef struct{
     char op;
-    int bytes;
+    size_t bytes;
     char* buffer;
-}Cabecera;
+}Solicitud;
 
 int set_root();
 int crear_server(Network_dir*);
 int set_cliente(int, Network_dir*, socklen_t*, int*, int*);
 void set_fds(int*, int, fd_set*);
-void leer_datos(fd_set*, int*, int*);
+void leer_stream(fd_set*, int*, int*);
 void handler(int, char*);
 void cerrar_conexion(fd_set*, int, int*, int*);
 void logear(char*);
 struct tm* que_hora_es();
-void enviar(int,char*);
+void enviar(int,Solicitud*);
 void recibir(int,char*);
 void listar(int,char*);
+void formatear_paquete(char*, Solicitud*);
 
 #endif // HEADERS_H

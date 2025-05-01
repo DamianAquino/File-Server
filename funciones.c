@@ -4,23 +4,24 @@ void logear(char* log)
 {
     FILE * archivo = fopen("/home/damian/Escritorio/telecomunicaciones/Internet/File Server3/logs.txt", "a");
 
-    if (archivo == NULL) {
+    if (archivo == NULL)
         perror("Error al abrir el archivo");
-    }
+
     fprintf(archivo, "%s\n", log);
     fclose(archivo);
 }
 
 int set_root()
 {
-    const char *new_dir = "/mnt";
+    const char *raiz = "/";
 
-    if(chdir(new_dir) != 0)
+    /// Cambia la carpets
+    if(chdir(raiz) != 0)
         return 1;
 
-    // Verificar el directorio de trabajo actual
+    /// Verificar la carpeta actual
     char cwd[5];
-    if(getcwd(cwd, sizeof(cwd)) == new_dir)
+    if(getcwd(cwd, sizeof(cwd)) == raiz)
         return 0;
     else
         return 1;
@@ -82,7 +83,6 @@ void cerrar_conexion(fd_set* readfds, int fd, int* fds, int* cant)
     struct tm* hora = que_hora_es();
 
     for(int i = 1; i <= *cant; i++)
-    {
         if(fds[i] == fd)
         {
             (*cant)--;
@@ -90,21 +90,18 @@ void cerrar_conexion(fd_set* readfds, int fd, int* fds, int* cant)
             logear(log);
             fds[i] = 0;
         }
-    }
 }
 
-void leer_datos(fd_set* readfds, int* fds, int* cant)
+void leer_stream(fd_set* readfds, int* fds, int* cant)
 {
     int bytesRead;
     char solicitud[MAX_SOLICITUD];
 
     for(int i = 1; i <= *cant; i++)
-    {
         if(fds[i] != 0)
-        {
             if(FD_ISSET(fds[i], readfds))
             {
-                bytesRead = recv(fds[i], solicitud, sizeof(solicitud), 0);
+                bytesRead = recv(fds[i], solicitud, MAX_SOLICITUD, 0);
                 if (bytesRead <= 0)
                     cerrar_conexion(readfds, fds[i], fds, cant);
                 else {
@@ -112,39 +109,73 @@ void leer_datos(fd_set* readfds, int* fds, int* cant)
                     handler(fds[i], solicitud);
                 }
             }
-        }
-    }
 }
 
-void handler(int fd, char* solicitud)
+void formatear_paquete(char* paquete, Solicitud* solicitud)
+{
+    int cont = 2;
+    char* num = (char*)malloc(5);
+    num[0] = '\0';
+
+    while(paquete[cont] != '|')
+    {
+        num[cont - 2] = paquete[cont];
+        cont ++;
+        //num[cont - 2] = '\0';
+    }
+
+    num[cont - 2] = '\0';
+
+    solicitud->op = paquete[0];
+    solicitud->bytes = atoi(num);
+
+    if(solicitud->bytes < 100)
+    {
+        solicitud->buffer = (char*)malloc(solicitud->bytes + 1);
+        strncpy(solicitud->buffer, (paquete + cont + 1), solicitud->bytes);
+        solicitud->buffer[solicitud->bytes] = '\0';
+
+        char* buffer = malloc(100);
+        logear(buffer);
+        free(buffer);
+    }
+    else
+        solicitud->op = 0;
+
+    free(num);
+}
+
+void handler(int fd, char* paquete)
 {
     struct tm* tiempo = que_hora_es();
     char log[100];
-    char* env = "Enviando archivo...";
-    char* err = "Error al recibir flag de operacion...";
     char* rec = "Recibiendo archivo...";
 
-    switch(solicitud[0])
+    Solicitud solicitud;
+
+    formatear_paquete(paquete, &solicitud);
+
+    switch(solicitud.op)
     {
-        case '1':
-            sprintf(log, "%02d:%02d:%02d FD:%d BAJADA : -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, solicitud);
+        case SOLICITUD:
+            sprintf(log, "%02d:%02d:%02d FD:%d BAJADA : -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, paquete);
             logear(log);
-            enviar(fd, env);
+            enviar(fd, &solicitud);
             break;
-        case '2':
-            sprintf(log, "%02d:%02d:%02d FD:%d SUBIDA : -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, solicitud);
+        case SUBIDA:
+            sprintf(log, "%02d:%02d:%02d FD:%d SUBIDA : -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, paquete);
             logear(log);
             recibir(fd, rec);
             break;
-        case '3':
-            sprintf(log, "%02d:%02d:%02d FD:%d LISTADO : -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, solicitud);
+        case LISTADO:
+            sprintf(log, "%02d:%02d:%02d FD:%d LISTADO : -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, paquete);
             logear(log);
-            listar(fd, solicitud);
+            listar(fd, solicitud.buffer);
             break;
         default:
-            sprintf(log, "%02d:%02d:%02d FD:%d ERROR MSG:-%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, solicitud);
+            sprintf(log, "%02d:%02d:%02d FD:%d ERROR MSG: -SOLICITUD INVALIDA.-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd);
             logear(log);
-            enviar(fd, err);
+            //enviar(fd, err);
             break;
     }
 }
@@ -157,44 +188,74 @@ void listar(int fd, char* carpeta)
 
     if((dir = opendir(carpeta)) == NULL)
     {
-        int max_len_rta = 4 + strlen(ARCHIVO_NO_ENCONTRADO) + 1;
-        char* rta = malloc(max_len_rta);
-        snprintf(rta, max_len_rta, "%c|%d|%s", ERROR, (int)strlen(rta), ARCHIVO_NO_ENCONTRADO);
-        send(fd, rta, strlen(rta), 0);
+        send(fd, CARPETA_NO_ENCONTRADA, strlen(CARPETA_NO_ENCONTRADA), 0);
 
         /// LOG
-        int max_len_log = 24 + (int)strlen(ARCHIVO_NO_ENCONTRADO) + 4;
-        char* err = malloc(max_len_log);
-        snprintf(err, max_len_log, "%02d:%02d:%02d ERROR FD:%d MSG: -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, ARCHIVO_NO_ENCONTRADO);
+        char* err = malloc((int)strlen(CARPETA_NO_ENCONTRADA));
+        snprintf(err, 28 + (int)strlen(CARPETA_NO_ENCONTRADA), "%02d:%02d:%02d ERROR FD:%d MSG: -%s-", tiempo->tm_hour, tiempo->tm_min, tiempo->tm_sec, fd, CARPETA_NO_ENCONTRADA);
         logear(err);
+        free(err);
     }
-
     else
     {
         char* buffer_nombres = malloc(1024);
+        buffer_nombres[0] = '\0';
 
         while((buffer_dirent = readdir(dir)) != NULL)
         {
            strcat(buffer_nombres, buffer_dirent->d_name);
            strcat(buffer_nombres, (char*)"\n");
         }
-        char* buffer = malloc(strlen(buffer_nombres) + 7);
+        buffer_nombres[(int)strlen(buffer_nombres)] = '\0';
 
-        snprintf(buffer, (int)strlen(buffer), "%c|%d|%s", DATOS, (int)strlen(buffer_nombres), buffer_nombres);
-        write(fd, (void*)buffer, strlen(buffer));
+        char* buffer = malloc((int)strlen(buffer_nombres) + 7);
+
+        snprintf(buffer, 1024, "%c|%d|%s", DATOS, (int)strlen(buffer_nombres), buffer_nombres);
+        write(fd, buffer, strlen(buffer));
         free(buffer);
         free(buffer_nombres);
     }
 }
 
-void enviar(int fd, char* archivo)
-{/*
-    char* buffer = (char*)malloc(2 + strlen(flag) + strlen(datos));
-    sprintf(buffer, "%s|%ld|%s", flag, strlen(datos), datos);
+void enviar(int fd, Solicitud* solicitud)
+{
+    FILE * arch = fopen(solicitud->buffer, "r");
+    if(!arch)
+    {
+        send(fd, ARCHIVO_NO_ENCONTRADO, strlen(ARCHIVO_NO_ENCONTRADO), 0);
+        return;
+    }
 
-    write(fd, buffer, strlen(buffer));
-    free(buffer);
-*/}
+    free(solicitud->buffer);
+
+    fseek(arch, 0 , SEEK_END);
+    long tam_arch = ftell(arch);
+    fseek(arch, 0 , SEEK_SET);
+
+    char* paquete = malloc(1032);
+    solicitud->buffer = malloc(tam_arch + 1);
+    solicitud->buffer[0] = '\0';
+    solicitud->op = 6;
+    solicitud->bytes = (size_t)tam_arch;
+
+    size_t bytes_leidos = fread(solicitud->buffer, 1, 1024, arch);
+
+    while (!feof(arch)) {
+        solicitud->buffer += bytes_leidos;
+        bytes_leidos = fread(solicitud->buffer, 1, 1024, arch);
+    }
+
+    solicitud->buffer[tam_arch - 1] = '\0';
+
+    int long_paquete = 7 + (int)strlen(solicitud->buffer);
+
+    snprintf(paquete, long_paquete, "%c|%d|%s", DATOS, (int)strlen(solicitud->buffer), solicitud->buffer);
+
+    send(fd, paquete, strlen(paquete), 0);
+
+    free(solicitud->buffer);
+    free(paquete);
+}
 
 void recibir(int fd, char* archivo)
 {

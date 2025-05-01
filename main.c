@@ -1,6 +1,6 @@
 #include "headers.h"
-#include "funciones.c"
-int main(int argc, char *argv[]) {
+//#include "funciones.c"
+int main(void) {
     Network_dir server_dir;
     Network_dir cliente_dir;
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
             set_cliente(server_dir.fd, &cliente_dir, &cliente_len, &n, descriptores);
 
         else
-            leer_datos(&readfds, descriptores, &n);
+            leer_stream(&readfds, descriptores, &n);
     }
 
     close(server_dir.fd);
