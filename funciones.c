@@ -256,8 +256,3 @@ void enviar(int fd, Solicitud* solicitud)
     free(solicitud->buffer);
     free(paquete);
 }
-
-void recibir(int fd, char* archivo)
-{
-
-}
